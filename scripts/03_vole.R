@@ -286,6 +286,7 @@ ggplot(data = dat, aes(x = year, y = voleMarch)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
+
 # Effect of random variables
 m1_2 <- lmer(voleMarch ~ (1|Hellmann_cat), data = dat)
 summary(m1_2)
@@ -293,6 +294,7 @@ m1_3 <- lmer(voleMarch ~ (1|NAO_cat), data = dat)
 summary(m1_3)
 m1_6 <- lmer(voleMarch ~ (1|Hellmann_cat) + (1|NAO_cat), data = dat)
 summary(m1_6)
+
 
 # Final model
 M1 <- lmer(voleMarch ~ (1|Hellmann_cat) + (1|NAO_cat), data = buzzard_dat)
@@ -367,6 +369,7 @@ ggplot(data = buzzard_dat, aes(x = voleMarch, y = laying_date)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
+
 # Effect of random variables
 m2_4 <- lmer(laying_date ~ (1|Hellmann_cat), data = buzzard_dat)
 summary(m2_4)
@@ -425,24 +428,22 @@ ggplot(data = buzzard_dat, aes(x = age, y = laying_date)) +
   labs(x = "Bird age", y = "Laying date") +
   theme_minimal()
 
+# Effect of random variables
+# See random effects explained in model 2
+m3_1 <- lmer(laying_date ~ (1|age), data = buzzard_dat)
+summary(m3_1)
 
-m8 <- lmer(laying_date ~ min_age + (1|year), data = buzzard_dat)
-summary(m8)
 
-#Model 9 & 10 - Laying date for young VS old birds in relation to Hellmann and NAO
-buzzard_young <- buzzard_dat |>
-  dplyr::filter(age == "young")
-buzzard_old <- buzzard_dat |>
-  dplyr::filter(age == "old")
+# Final model: bird age on laying date
+M3 <- lmer(laying_date ~ min_age + (1|year) + (1|ID_Buzzard), data = buzzard_dat)
+summary(M3)
+#Repeatability ID_Buzzard: 44.72 / (44.72 + 47.75) = 0.4836163
+#Repeatability year:       16.40 / (16.40 + 47.75) = 0.2556508
+#min_age intercept: 99.52 / slope: -0.107 / t value: -1.246: non-significant?
 
-#Young birds
-m9 <- lmer(laying_date ~ min_age + Hellmann_winter + NAO_winter + (1|year) + (1|ID_Buzzard), data = buzzard_young)
-summary(m9)
-confint(m9)
+# Subject centered model
 
-#Old birds
-m10 <- lmer(laying_date ~ min_age + Hellmann_winter + NAO_winter + (1|year), data = buzzard_old)
-summary(m10)
+
 
 
 
