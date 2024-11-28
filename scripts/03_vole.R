@@ -34,6 +34,10 @@ hist(dat$voleMarch)
 
 
 ##################################################################
+
+# DATA AND MODELS EXPLORATION (final models below)
+
+##################################################################
 #VOLES - winter harshness
 #Model 1 - Hellmann and NAO
 #Visualizing regression
@@ -236,8 +240,211 @@ ggplot(data = buzzard_dat, aes(x = voleMarch, y = laying_date)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
 
+m11_1 <- lm(laying_date ~ voleMarch, data = buzzard_dat)
+summary(m11_1)
+
 m11 <- lmer(laying_date ~ voleMarch + (1|ID_Buzzard) + (1|year), data = buzzard_dat)
 summary(m11)
+
+
+##################################################################
+
+# CREATION OF THREE FINAL MODELS
+  # MODEL 1 - March Vole abundance ~ Hellmann / NAO
+  # MODEL 2 - Buzzard laying date ~ Vole abundance
+  # MODEL 3 - Buzzard laying date ~ Bird age
+    # EXTEND WITH SUBJECT CENTERED MODEL
+
+##################################################################
+# MODEL 1 - March Vole abundance ~ Hellmann / NAO - based on data base "dat" (environmental cov.)
+
+#Hellmann and NAO
+#Visualizing regression
+ggplot(data = dat, aes(x = Hellmann_winter, y = NAO_winter)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+m1_1 <- lm(NAO_winter ~ Hellmann_winter, data= dat)
+summary(m1_1)
+
+m1_5 <- lm(voleMarch ~ year, data = dat)
+summary(m1_5)
+
+#Hellmann and voles
+#Visualizing regression
+ggplot(data = dat, aes(x = Hellmann_winter, y = voleMarch)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+#NAO and voles
+#Visualizing regression
+ggplot(data = dat, aes(x = NAO_winter, y = voleMarch)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+#Voles over the years
+#Visualizing relation
+ggplot(data = dat, aes(x = year, y = voleMarch)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Effect of random variables
+m1_2 <- lmer(voleMarch ~ (1|Hellmann_cat), data = dat)
+summary(m1_2)
+m1_3 <- lmer(voleMarch ~ (1|NAO_cat), data = dat)
+summary(m1_3)
+m1_6 <- lmer(voleMarch ~ (1|Hellmann_cat) + (1|NAO_cat), data = dat)
+summary(m1_6)
+
+# Final model
+M1 <- lmer(voleMarch ~ (1|Hellmann_cat) + (1|NAO_cat), data = buzzard_dat)
+summary(M1)
+#Repeatability Hellmann: 29.06 / (29.06 + 132.23) = 0.1801724
+#Repeatability NAO:      59.04 / (59.04 + 132.23) = 0.3086736
+
+###################
+
+# MODEL 2 - Buzzard laying date ~ Winter harshness + Vole abundance - based on 
+#   data base "buzzard_dat" (buzzard_friesland)
+
+#Laying date in relation to Hellmann
+#Visualizing regression
+ggplot(data = buzzard_dat, aes(x = Hellmann_winter, y = laying_date)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+m2_1 <- aov(laying_date ~ Hellmann_cat, data = buzzard_dat)
+tukey_result1<-TukeyHSD(m2_1)
+tukey_result1
+
+tukey_cld1 <- multcompView::multcompLetters(TukeyHSD(m2_1)$Hellmann_cat[,"p adj"])
+tukey_cld1
+
+letters_df1 <- data.frame(
+  group = c("Low", "Medium", "High"),
+  cld = c("a", "a", "b"),
+  ypos = c(200, 200, 200))
+
+ggplot(data = buzzard_dat, aes(x = Hellmann_cat, y = laying_date)) +
+  geom_boxplot() +
+  geom_text(
+    data = letters_df1,
+    aes(x = group, y = ypos, label = cld),
+    inherit.aes = FALSE,
+    vjust = -0.5) +
+  labs(x = "Hellmann index", y = "Laying date") +
+  theme_minimal()
+
+#Laying date in relation to NAO
+ggplot(data = buzzard_dat, aes(x = NAO_winter, y = laying_date)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+m2_2 <- aov(laying_date ~ NAO_cat, data = buzzard_dat)
+tukey_result2<-TukeyHSD(m2_2)
+tukey_result2
+
+p_values <- TukeyHSD(m2_2)$NAO_cat[,"p adj"]
+names(p_values) <- rownames(TukeyHSD(m2_2)$NAO_cat)
+tukey_cld2 <- multcompView::multcompLetters(p_values)
+tukey_cld2
+
+letters_df2 <- data.frame(
+  group = c("Positive", "Negative"),
+  cld = c("a", "b"),
+  ypos = c(200, 200))
+
+ggplot(data = buzzard_dat, aes(x = NAO_cat, y = laying_date)) +
+  geom_boxplot() +
+  labs(x = "NAO index", y = "Laying date") +
+  geom_text(
+    data = letters_df2,
+    aes(x = group, y = ypos, label = cld),
+    inherit.aes = FALSE,
+    vjust = -0.5) +
+  theme_minimal()
+
+#Laying date in relation to vole abundance
+ggplot(data = buzzard_dat, aes(x = voleMarch, y = laying_date)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Effect of random variables
+m2_4 <- lmer(laying_date ~ (1|Hellmann_cat), data = buzzard_dat)
+summary(m2_4)
+m2_5 <- lmer(laying_date ~ (1|NAO_cat), data = buzzard_dat)
+summary(m2_5)
+m2_6 <- lmer(laying_date ~ (1|year), data = buzzard_dat)
+summary(m2_6)
+m2_7 <- lmer(laying_date ~ (1|ID_Buzzard), data = buzzard_dat)
+summary(m2_7)
+m2_9 <- lmer(laying_date ~ (1|voleMarch), data = buzzard_dat)
+summary(m2_9)
+#Hellmann could not be added:
+m2_8 <- lmer(laying_date ~ (1|NAO_cat) + (1|year) + (1|ID_Buzzard) + (1|voleMarch), data = buzzard_dat)
+summary(m2_8)
+
+
+# Final model: vole abundance on laying date
+M2_1 <- lmer(laying_date ~ voleMarch + (1|ID_Buzzard) + (1|year), data = buzzard_dat)
+summary(M2_1)
+#Repeatability ID_Buzzard: 44.36 / (44.36 + 47.83) = 0.4811802
+#Repeatability year:       10.87 / (10.87 + 47.83) = 0.1851789
+#voleMarch intercept: 101.85 / slope: -0.193 / t value: -3.32: significant
+
+
+###################
+
+# MODEL 3 - Buzzard laying date ~ Bird age - based on
+#   data base "buzzard_dat" (buzzard_friesland)
+
+#Laying date in relation to bird age
+ggplot(data = buzzard_dat, aes(x = min_age, y = laying_date)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+m2_3 <- aov(laying_date ~ age, data = buzzard_dat)
+tukey_result3<-TukeyHSD(m2_3)
+tukey_result3
+
+p_values2 <- TukeyHSD(m2_3)$age[,"p adj"]
+names(p_values2) <- rownames(TukeyHSD(m2_3)$age)
+tukey_cld3 <- multcompView::multcompLetters(p_values2)
+tukey_cld3
+
+letters_df3 <- data.frame(
+  group = c("young", "old"),
+  cld = c("a", "b"),
+  ypos = c(200, 200))
+
+ggplot(data = buzzard_dat, aes(x = age, y = laying_date)) +
+  geom_boxplot() +
+  geom_text(
+    data = letters_df3,
+    aes(x = group, y = ypos, label = cld),
+    inherit.aes = FALSE,
+    vjust = -0.5) +
+  labs(x = "Bird age", y = "Laying date") +
+  theme_minimal()
+
+
+m8 <- lmer(laying_date ~ min_age + (1|year), data = buzzard_dat)
+summary(m8)
+
+#Model 9 & 10 - Laying date for young VS old birds in relation to Hellmann and NAO
+buzzard_young <- buzzard_dat |>
+  dplyr::filter(age == "young")
+buzzard_old <- buzzard_dat |>
+  dplyr::filter(age == "old")
+
+#Young birds
+m9 <- lmer(laying_date ~ min_age + Hellmann_winter + NAO_winter + (1|year) + (1|ID_Buzzard), data = buzzard_young)
+summary(m9)
+confint(m9)
+
+#Old birds
+m10 <- lmer(laying_date ~ min_age + Hellmann_winter + NAO_winter + (1|year), data = buzzard_old)
+summary(m10)
+
+
 
 
 
