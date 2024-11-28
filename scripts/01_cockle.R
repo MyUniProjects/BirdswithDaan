@@ -61,6 +61,35 @@ p2 <- ggplot(food_ab, aes(x= CocklesKg, y = NAO_winter)) +
 ggsave("figures/Cockle_NAO_winter.png", p2, width = 6, height = 4, units = "in", dpi = 300)
 
 ### Make a model 
+model1 <- lmer(layingdate ~ (1|Hellmann_winter), data = winteroys)
+summary(model1)
+confint(model1)
+model2 <- lmer(layingdate ~(1|NAO_winter), data = winteroys)
+summary(model2)
+confint(model2)
+model3 <- lmer(layingdate ~(1|Hellmann_cat), data = winteroys)
+summary(model3)
+confint(model3)
+model4 <- lmer(layingdate ~(1|NAO_cat), data = winteroys)
+summary(model4)
+confint(model4)
+model5 <- lmer(layingdate ~ (1|couple_ID), data = oydat)
+summary(model5)
+confint(model5)
+model6 <- lmer(layingdate ~ (1|maleID), data = oydat)
+summary(model6)
+confint(model6)
+model7 <- lmer(layingdate ~ (1|femID), data = oydat)
+summary(model7)
+confint(model7)
+model8 <- lmer(layingdate ~ (1|year), data = oydat)
+summary(model8)
+confint(model8)
+model9 <- lmer(layingdate ~ (1|CocklesKg), data = cockoydat)
+summary(model9)
+confint(model9)
+
+
 mod1 <- lm(CocklesKg ~ Hellmann_winter, data = food_ab)
 summary(mod1)
 # not significant but there is small effect
@@ -82,6 +111,7 @@ summary(mod5)
 
 mod6 <- lm(CocklesKg ~ Hellmann_winter + NAO_winter + year, data = food_ab)
 summary(mod6)
+confint(mod6)
 
 anova(mod6, mod5)
 
@@ -128,6 +158,9 @@ ggplot(food_ab, aes(x = Hellmann_cat, y = CocklesKg)) +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Hellmann Category", y = "Cockles Kg") +
   theme_minimal()
+
+model10 <- glmer(CocklesKg ~ year + (1|NAO_cat) , data = food_ab, family = "gaussian")
+summary(model10)
 
 # use tukey test to see which groups are different
 mod21 <- aov(CocklesKg ~ Hellmann_cat, data = food_ab) # Refit with aov
@@ -243,7 +276,9 @@ print(tukey_result)
 tukey_cld <- multcompView::multcompLetters(TukeyHSD(mod23)$Hellmann_cat[,"p adj"])
 tukey_cld
 
-mod24 <- aov(layingdate ~ NAO_cat, data = winteroys) 
+mod24 <- lm(layingdate ~ NAO_cat, data = winteroys) 
+summary(mod24)
+confint(mod24)
 tukey_result <- TukeyHSD(mod24)
 print(tukey_result)
 
@@ -256,9 +291,11 @@ tukey_cld
 
 mod10 <- lm(layingdate ~ year, data = winteroys)
 summary(mod10)
+confint(mod10)
 
 mod11 <- lmer(layingdate ~ year + (1|couple_ID), data = winteroys)
 summary(mod11)
+confint(mod11)
 # couple_ID has a big effect on laying date
 # repeatability is 64.24 / (64.24 + 75.07) = 0.461
 # variance of couple_ID is 64.24
@@ -266,6 +303,7 @@ summary(mod11)
 
 mod12 <- lmer(layingdate ~ year + (1|couple_ID) + (1|maleID) + (1|femID), data = winteroys)
 summary(mod12)
+confint(mod12)
 # now couple_ID has a much lower variance than before namely 9.395
 # probably because fem and male ID explain a big part of the variance of couple_ID
 # variance of residuals is a bit lower namely 73.936
@@ -308,6 +346,7 @@ summary(mod16)
 
 mod17 <- lmer(layingdate ~ NAO_cat + (1|femID) , data = winteroys)
 summary(mod17)
+confint(mod17)
 ## When looking at the NAO categories there is a bigger effect than just the nummerical NAO but still not lots of effect. Additionally the residual variance is only down by 1.0 compared to the models without NAO
 
 mod18 <- lmer(layingdate ~ year + Hellmann_cat + NAO_cat + (1|couple_ID) + (1|maleID) + (1|femID), data = winteroys)
@@ -331,12 +370,14 @@ ggplot(cockoydat, aes(x = CocklesKg, y = layingdate)) +
   labs(x = "Cockles Kg", y = "Laying Date") +
   theme_minimal()
 
-ggplot(cockoydat, aes(x = CocklesKg, y = layingdate)) +
+p9 <- ggplot(cockoydat, aes(x = CocklesKg, y = layingdate)) +
   stat_summary(fun = mean, geom = "point") +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Cockles Kg", y = "Laying Date") +
   theme_minimal()
 ## Only 2 day difference in laying date when comparing the means of the years 
+
+ggsave("figures/Layingdate_Cockle.png", p9, width = 6, height = 4, units = "in", dpi = 300)
 
 ##########################################################################
 ## Step. 6 Is there difference in laying date depending on age? 
