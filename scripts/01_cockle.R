@@ -241,15 +241,15 @@ summary(mod13)
 # the variance of the residual is now even lower, namely 67.627
 # now the difference between years has been taken into account. Which is important because there is variance between the couples per year, and also there is difference in femID between couples because males mate with different females depending on whether there partner died. 
 
-p8 <- 
 
 ###############################################################################
 # Step 4. How is laying date correlated with winter proxies 
-mod14 <- lmer(layingdate ~ year + Hellmann_winter + (1|couple_ID) + (1|maleID) + (1|femID) + (1|year), data = winteroys)
+
+mod14 <- lmer(layingdate ~ year + Hellmann_winter + (1|couple_ID) + (1|maleID) + (1|femID), data = winteroys)
 summary(mod14)
 ## So Hellman winter does not seem to have a big effect as a fixed effect
 
-mod15 <- lmer(layingdate ~ year + Hellmann_cat + (1|couple_ID) + (1|maleID) + (1|femID) + (1|year), data = winteroys)
+mod15 <- lmer(layingdate ~ year + Hellmann_cat + (1|couple_ID) + (1|maleID) + (1|femID), data = winteroys)
 summary(mod15)
 ## When looking at the Hellman categories there is a bigger effect than just the nummerical hellman but still not lots of effect. Additionally the residual variance is only down by 1.0 compared to the models without Hellman
 
