@@ -20,7 +20,23 @@ bird <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vToaxR52HV3eiU
   dplyr::select(ID_Buzzard, sex, year, min_age, laying_date) |>
   na.omit()
 
-  
+breeding_counts <- bird |>
+  count(ID_Buzzard) |>         # Replace 'ID_Buzzard' with the actual column name for individual IDs
+  rename(breeding_events = n)   # Rename the count column for clarity
+
+# Summarize the counts (how many individuals bred once, twice, etc.)
+summary_counts <- breeding_counts |>
+  count(breeding_events) |>    # Count the frequency of each breeding count
+  rename(times_bred = breeding_events, num_individuals = n)
+summary_counts 
+#Plot with ggplot
+ggplot(data = summary_counts, aes(x = times_bred, y = num_individuals)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Number of breeding events", y = "Number of individuals") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 16),
+        axis.title = element_text(size = 16)) 
+ggsave("plots/breeding_counts.png", width = 10, height = 5, dpi = 600)
 
 
 #Assignment:
@@ -105,6 +121,8 @@ buzzard <- bird |>
   dplyr::filter(!(age == "young" & max_age >= 8))
 
 buzzard_dat <- dplyr::left_join(buzzard, dat, by = "year")
+#save as a csv file
+write.csv(buzzard_dat, "buzzard_dat.csv")
   
 
 #Model 6 - Laying date in relation to Hellmann
@@ -246,6 +264,8 @@ summary(m11_1)
 m11 <- lmer(laying_date ~ voleMarch + (1|ID_Buzzard) + (1|year), data = buzzard_dat)
 summary(m11)
 
+#install.packages("patchwork")
+library(patchwork)
 
 ##################################################################
 
@@ -272,14 +292,19 @@ summary(m1_5)
 
 #Hellmann and voles
 #Visualizing regression
-ggplot(data = dat, aes(x = Hellmann_winter, y = voleMarch)) +
+p1 <- ggplot(data = dat, aes(x = Hellmann_winter, y = voleMarch)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
+p1
 #NAO and voles
 #Visualizing regression
-ggplot(data = dat, aes(x = NAO_winter, y = voleMarch)) +
+p2 <- ggplot(data = dat, aes(x = NAO_winter, y = voleMarch)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
+p2
+winter_voles <- p1 + p2 + patchwork::plot_layout(ncol = 2)
+winter_voles
+ggsave("plots/winter_voles.png", winter_voles, width = 10, height = 5, dpi = 600)
 #Voles over the years
 #Visualizing relation
 ggplot(data = dat, aes(x = year, y = voleMarch)) +
@@ -297,10 +322,11 @@ summary(m1_6)
 
 
 # Final model
-M1 <- lmer(voleMarch ~ (1|Hellmann_cat) + (1|NAO_cat), data = buzzard_dat)
+M1 <- lmer(voleMarch ~ (1|Hellmann_cat) + (1|NAO_cat), data = dat)
 summary(M1)
-#Repeatability Hellmann: 29.06 / (29.06 + 132.23) = 0.1801724
-#Repeatability NAO:      59.04 / (59.04 + 132.23) = 0.3086736
+confint(M1)
+#Repeatability Hellmann: 14.66 / (14.66 + 177.38) = 0.07633826
+#Repeatability NAO:      20.03 / (20.03 + 177.38) = 0.101464
 
 ###################
 
@@ -365,9 +391,16 @@ ggplot(data = buzzard_dat, aes(x = NAO_cat, y = laying_date)) +
   theme_minimal()
 
 #Laying date in relation to vole abundance
+
+
 ggplot(data = buzzard_dat, aes(x = voleMarch, y = laying_date)) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm", se = FALSE) + 
+  labs(x = "Spring vole abundance", y = "Laying date (days from 1 January)") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 16),
+        axis.title = element_text(size = 16))
+ggsave("plots/laying_date_vole.png", width = 10, height = 5, dpi = 600)
 
 
 # Effect of random variables
@@ -389,6 +422,7 @@ summary(m2_8)
 # Final model: vole abundance on laying date
 M2_1 <- lmer(laying_date ~ voleMarch + (1|ID_Buzzard) + (1|year), data = buzzard_dat)
 summary(M2_1)
+confint(M2_1)
 #Repeatability ID_Buzzard: 44.36 / (44.36 + 47.83) = 0.4811802
 #Repeatability year:       10.87 / (10.87 + 47.83) = 0.1851789
 #voleMarch intercept: 101.85 / slope: -0.193 / t value: -3.32: significant
@@ -463,11 +497,44 @@ confint(M4)
 
 #Confidence intervals just overlap, meaing that the within individual and between individual effects are 
 #not significantly different from each other. This means that the age effect on laying date is not significant.
+43.34 / (43.34 + 62.22) = 0.41
+62.22 / (43.35 + 62.22) = 0.59
 
 
+# Plotting of the final models
+# Add predicted values to the data
+buzzard_dat$predicted <- predict(M4)
 
+# Within-individual effect: Plot wth_ind_age_cen
+p3 <- ggplot(buzzard_dat, aes(x = wth_ind_age_cen, y = predicted)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(title = "Within-Individual Effect of Age (Centered)",
+       x = "Centered Age (within individual)",
+       y = "Laying Date (days from 1 January)") +
+  theme_minimal() +
+  theme(title = element_text(size = 14),
+        axis.text = element_text(size = 16),
+        axis.title = element_text(size = 16))
+p3
 
+# Between-individual effect: Plot btw_ind_avg_age
+p4 <- ggplot(buzzard_dat, aes(x = btw_ind_avg_age, y = predicted)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Between-Individual Effect of Average Age",
+       x = "Average Age (between individual)",
+       y = "Laying Date (days from 1 January)") +
+  theme_minimal() +
+  theme(title = element_text(size = 14),
+        axis.text = element_text(size = 16),
+        axis.title = element_text(size = 16))
+p4
 
+# Combine the plots
+final_model_plot <- p3 + p4 + patchwork::plot_layout(ncol = 2)
+final_model_plot
+ggsave("plots/final_model_cent_plot.png", final_model_plot, width = 10, height = 5, dpi = 600)
 
 
 
