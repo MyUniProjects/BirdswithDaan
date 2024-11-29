@@ -108,8 +108,9 @@ summary(mod4)
 
 mod5 <- lm(CocklesKg ~ Hellmann_winter + NAO_winter, data = food_ab)
 summary(mod5)
+confint(mod5)
 
-mod6 <- lm(CocklesKg ~ Hellmann_winter + NAO_winter + year, data = food_ab)
+mod6 <- lm(CocklesKg ~ Hellmann_winter + NAO_winter + year , data = food_ab)
 summary(mod6)
 confint(mod6)
 
@@ -466,7 +467,24 @@ m4 <- glmer(layingdate ~ Wthin_Ind_Coc + Btw_Ind_Coc + (1|femID), data = cockoyd
 summary(m4)
 confint(m4)
 
+### Analyse plasticity of Hellmann's Index 
+#Center Hellmann's Index  per individual
+ind_avg_age<-aggregate(cbind(age)~femID,femdat,mean) 
+# Calc avg density per fem
+## Between individual effect: mean density for each female! This is how individuals differ
+femdat$Btw_Ind_age<-lookup(femdat$femID,ind_avg_age[,c("femID","age")])
+## Within individual effect: how each value differs from individual mean.
+femdat$Wthin_Ind_age<-femdat$age-femdat$Btw_Ind_age 
+#Model with annual_density_cen (within individual effect) and avgAnDens (between individual effect
+m5<-glmer(layingdate~Wthin_Ind_age + Btw_Ind_age+ (1|femID), data= femdat, family="gaussian")
+summary(m5)
+confint(m5)
 
+cor(femdat$Wthin_Ind_age, femdat$Btw_Ind_age)
 
-
+ggplot(winteroys, aes(x = Wthin_Ind_Hell, y = layingdate)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Hellmann's Index", y = "Laying Date") +
+  theme_minimal()
 
