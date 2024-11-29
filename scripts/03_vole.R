@@ -441,9 +441,28 @@ summary(M3)
 #Repeatability year:       16.40 / (16.40 + 47.75) = 0.2556508
 #min_age intercept: 99.52 / slope: -0.107 / t value: -1.246: non-significant?
 
-# Subject centered model
 
+# SUBJECT CENTERED MODEL - to better look at effect of age on laying date
+#Load package qdapTools to be able to use the lookup function
+#install.packages("qdapTools")
+library(qdapTools)
 
+# Center age per ID_Buzzard (individual)
+ind_age <- aggregate(cbind(min_age) ~ ID_Buzzard, buzzard_dat, mean)
+buzzard_dat$btw_ind_avg_age <- lookup(buzzard_dat$ID_Buzzard, ind_age[, c("ID_Buzzard", "min_age")])
+
+# Center age for each individual (within-individual effect)
+buzzard_dat$wth_ind_age_cen <- buzzard_dat$min_age - buzzard_dat$btw_ind_avg_age  # Center age by subtracting the individual's mean age
+
+# Fit mixed model with age_cen (within-individual effect) and avg_age (between-individual effect)
+M4 <- lmer(laying_date ~ wth_ind_age_cen + btw_ind_avg_age + (1 | ID_Buzzard), data = buzzard_dat)
+
+# View model summary and confidence intervals
+summary(M4)
+confint(M4)
+
+#Confidence intervals just overlap, meaing that the within individual and between individual effects are 
+#not significantly different from each other. This means that the age effect on laying date is not significant.
 
 
 
